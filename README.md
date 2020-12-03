@@ -3,12 +3,14 @@
 Utility to extract and compose firmware update packages for Galaxy Buds devices.  
 An official firmware image is required. You can pull one directly from Samsung's FOTA servers.
 
-## Extraction mode (`--extract firmware.bin`)
+## Operating modes
+
+### Extract (`--extract firmware.bin`)
 
 Extracts the firmware binary segments and mp3 audio resources from the given binary file.  
 Additionally creates a file which contains all segments at once (`firmware_segments/firmware.raw.bin`).
 
-## Compose mode (`--compose firmware.bin`)
+### Compose (`--compose firmware.bin`)
 
 Composes the firmware binary segments from `firmware_segments/` into a valid firmware file `firmware_patched.bin`.  
 Until now, the mp3 files do not get re-imported.
@@ -85,6 +87,6 @@ Patched firmware file has been successfully written to 'FOTA_R175XXU0ATH7_compos
 
 ## Todo
 
-- Code cleanup
+- Massive code cleanup
 - Refactoring of new features in seperate classes
 - Composition of mp3 files
