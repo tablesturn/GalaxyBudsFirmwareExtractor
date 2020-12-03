@@ -10,46 +10,97 @@ public class Main {
         System.out.println();
 
         if(args.length < 1){
-            System.out.println("Missing argument. Please specify a firmware binary file.");
+            System.out.println("Missing argument. Please specify a mode (--extract or --compose)");
             return;
         }
 
-        System.out.println("Analysing binary...");
-        System.out.println();
+        String baseName = args[1].split("[.]")[0];
 
-        File inputFile = new File(args[0]);
-        FOTABinary bin = new FOTABinary(inputFile);
+        if(args[0].equals("--extract")){
+            if(args.length < 2){
+                System.out.println("Missing argument. Please specify a firmware binary file.");
+                return;
+            }
 
-        if(!bin.readFirmware())
-            exit(1);
+            System.out.println("Extracting binary " + args[0]);
+            System.out.println();
 
-        if(!bin.readAudioSegments())
-            exit(1);
+            File inputFile = new File(args[1]);
+            FOTABinary bin = new FOTABinary(inputFile);
 
-        String baseName = inputFile.getName().split("[.]")[0];
-        String outputPath = inputFile.getParentFile().getPath() + "/" + baseName + "_out";
-        File dir = new File(outputPath);
-        if (!dir.exists()){
-            //noinspection ResultOfMethodCallIgnored
-            dir.mkdirs();
+            //String outputPath = inputFile.getParentFile().getPath() + "/" + baseName + "_segments";
+            String outputPath = baseName + "_segments";
+            File dir = new File(outputPath);
+            if (!dir.exists()){
+                //noinspection ResultOfMethodCallIgnored
+                dir.mkdirs();
+            }
+
+            if(!bin.readFirmware())
+                exit(1);
+
+            if(!bin.readAudioSegments())
+                exit(1);
+
+            System.out.println();
+            System.out.print("Extracting binary segments into raw firmware images... ");
+
+            File outputRawBinFile = new File(outputPath + "/" + baseName+ ".raw.bin");
+            if(!bin.writeRawArchive(outputRawBinFile))
+                exit(1);
+
+            // Write all binary segments to separate files
+            if(!bin.extractBinarySegments(outputPath))
+                exit(1);
+
+            System.out.println("Done");
+
+            System.out.print("Extracting audio segments as MP3 files... ");
+            if(!bin.writeAudioSegments(outputPath))
+                exit(1);
+
+            System.out.println("Done");
+
+            System.out.println();
+            System.out.println("Segment files have been written to '" + outputPath + "'");
         }
+        else if(args[0].equals("--compose")){
+            if(args.length < 2){
+                System.out.println("Missing argument. Please specify the firmware binary file name or the basename.");
+                return;
+            }
 
-        System.out.println();
-        System.out.print("Extracting binary segments into raw firmware image... ");
+            File inputFile = new File(args[1]);
+            FOTABinary bin = new FOTABinary(inputFile);
 
-        File outputRawBinFile = new File(outputPath + "/" + baseName+ ".raw.bin");
-        if(!bin.writeRawBinary(outputRawBinFile))
-            exit(1);
+            //String outputPath = inputFile.getParentFile().getPath() + "/" + baseName + "_segments";
+            String outputPath = baseName + "_segments";
+            File dir = new File(outputPath);
+            if (!dir.exists()){
+                //noinspection ResultOfMethodCallIgnored
+                dir.mkdirs();
+            }
 
-        System.out.println("Done");
+            System.out.println("Importing binary segments...");
 
-        System.out.print("Extracting audio segments as MP3 files... ");
-        if(!bin.writeAudioSegments(outputPath))
-            exit(1);
+            if(!bin.importBinarySegments(outputPath))
+                exit(1);
 
-        System.out.println("Done");
+            System.out.println();
+            System.out.print("Composing firmware file... ");
 
-        System.out.println();
-        System.out.println("Data has been written to '" + outputPath + "'");
+            File outputFile = new File(baseName + "_composed.bin");
+            if(!bin.exportFirmware(outputFile))
+                exit(1);
+
+            System.out.println("Done");
+
+            System.out.println();
+            System.out.println("Patched firmware file has been successfully written to '" + baseName + "_composed.bin'");
+        }
+        else{
+            System.out.println("Invalid argument. Please specify a mode (--extract or --compose)");
+            return;
+        }
     }
 }
