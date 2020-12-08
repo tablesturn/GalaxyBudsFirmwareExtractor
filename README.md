@@ -91,3 +91,4 @@ Composing firmware file to FOTA_R175XXU0ATH7_composed.bin... Done
 
 - Check for unhandled exceptions
 - Composition of mp3 files
+- (Improve command line output style)
