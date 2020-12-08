@@ -6,7 +6,6 @@ public class LocatableByteArrayInputStream extends ByteArrayInputStream {
     public LocatableByteArrayInputStream(byte[] buf) {
         super(buf);
     }
-
     public int getPosition(){
         return this.pos;
     }

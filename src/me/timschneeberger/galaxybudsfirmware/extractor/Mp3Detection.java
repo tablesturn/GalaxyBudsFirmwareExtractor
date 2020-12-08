@@ -32,12 +32,10 @@ public class Mp3Detection {
             entry(0b10,  32000)
     );
 
-    public static ArrayList<Mp3Segment> analyse(File file) throws IOException {
+    public static ArrayList<Mp3Segment> analyse(byte[] byteArray) throws IOException {
         ArrayList<Mp3Segment> segments = new ArrayList<Mp3Segment>();
 
-        FileInputStream fileInputStream = new FileInputStream(file);
-        LocatableByteArrayInputStream stream =
-                new LocatableByteArrayInputStream(fileInputStream.readAllBytes());
+        LocatableByteArrayInputStream stream = new LocatableByteArrayInputStream(byteArray);
 
         boolean isMp3 = false;
         int counter = 0;
@@ -57,22 +55,25 @@ public class Mp3Detection {
             if(!isMp3){
                 /* Discard any "audio" data under 1kB */
                 if(lastMp3Bytes.size() > 1000){
-                    Mp3Segment segment = new Mp3Segment(Utils.toPrimitiveBytes(lastMp3Bytes),
+                    Mp3Segment segment = new Mp3Segment(toPrimitiveBytes(lastMp3Bytes),
                             offset, counter, last_samplerate, last_bitrate);
                     segments.add(segment);
 
-                    System.out.println("│ ├─ ID=" + segment.getIndex() +
+                    System.out.println();
+                    if(counter == 0)
+                        System.out.println("├─┐");
+                    System.out.print("│ └─ ID=" + segment.getIndex() +
                             "\tOffset=0x" +   String.format("%x", segment.getOffset()) +
                             "\tSize=" + segment.getData().length +
                             "\tBitrate=" + segment.getBitrate() +
                             "\tSamplerate=" + segment.getSamplerate());
-
-                    try (FileOutputStream fos = new FileOutputStream("/home/ronin/out_" + segment.getIndex() + ".mp3")) {
+/*
+                    try (FileOutputStream fos = new FileOutputStream("out_" + segment.getIndex() + ".mp3")) {
                         fos.write(Utils.toPrimitiveBytes(lastMp3Bytes));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-
+*/
                     counter++;
                 }
                 lastMp3Bytes.clear();
@@ -163,16 +164,21 @@ public class Mp3Detection {
             isMp3 = true;
         }
 
-        if(segments.size() < 1){
-            System.out.println("│ └─ No MP3 audio segments found");
-        }
-        else {
-            System.out.println("│ └─ [EOF] SegmentCount=" + segments.size());
+        if(segments.size() > 0){
+            System.out.println();
+            System.out.println("  └─ [EOF] SegmentCount=" + segments.size());
         }
 
         stream.close();
-        fileInputStream.close();
 
         return segments;
+    }
+
+    static byte[] toPrimitiveBytes(ArrayList<Byte> array){
+        byte[] bytes = new byte[array.size()];
+        for(int i = 0; i < array.size(); i++){
+            bytes[i] = array.get(i);
+        }
+        return bytes;
     }
 }
