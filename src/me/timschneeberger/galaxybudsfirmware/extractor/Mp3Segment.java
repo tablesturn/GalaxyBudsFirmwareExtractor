@@ -1,6 +1,7 @@
 package me.timschneeberger.galaxybudsfirmware.extractor;
 
 import java.io.*;
+import java.util.ArrayList;
 
 public class Mp3Segment {
     private final String TAG = "[Mp3Segment] ";
@@ -17,6 +18,20 @@ public class Mp3Segment {
         this.index = index;
         this.samplerate = samplerate;
         this.bitrate = bitrate;
+    }
+
+    public boolean saveToFile(File file) throws IOException{
+        FileOutputStream fileOutputStream = new FileOutputStream(file);
+        DataOutputStream os = new DataOutputStream(fileOutputStream);
+        try {
+            os.write(this.data);
+        } catch (Exception e) {
+            e.printStackTrace();
+            os.close();
+            return false;
+        }
+        os.close();
+        return true;
     }
 
     public byte[] getData() {
@@ -39,25 +54,11 @@ public class Mp3Segment {
         return samplerate;
     }
 
-    public boolean writeFile(String directory, String prefix) throws IOException{
-        FileOutputStream fileOutputStream;
-        try {
-            fileOutputStream = new FileOutputStream(directory + "/" + prefix + "_" + String.format("0x%x", getOffset()) + ".mp3");
-        } catch (FileNotFoundException e) {
-            System.out.println();
-            System.out.println(TAG + "ERROR: Cannot write output file. There exists already a directory with the same name.");
-            return false;
+    public static Mp3Segment[] toPrimitiveMp3Segment(ArrayList<Mp3Segment> array){
+        Mp3Segment[] bytes = new Mp3Segment[array.size()];
+        for(int i = 0; i < array.size(); i++){
+            bytes[i] = array.get(i);
         }
-
-        DataOutputStream os = new DataOutputStream(fileOutputStream);
-        try {
-            os.write(data);
-        } catch (Exception e) {
-            e.printStackTrace();
-            os.close();
-            return false;
-        }
-        os.close();
-        return true;
+        return bytes;
     }
 }

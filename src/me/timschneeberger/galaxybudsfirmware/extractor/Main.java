@@ -22,13 +22,11 @@ public class Main {
                 return;
             }
 
-            System.out.println("Extracting binary " + args[0]);
+            System.out.println("Importing firmware binary " + args[1]);
             System.out.println();
 
             File inputFile = new File(args[1]);
-            FOTABinary bin = new FOTABinary(inputFile);
 
-            //String outputPath = inputFile.getParentFile().getPath() + "/" + baseName + "_segments";
             String outputPath = baseName + "_segments";
             File dir = new File(outputPath);
             if (!dir.exists()){
@@ -36,33 +34,18 @@ public class Main {
                 dir.mkdirs();
             }
 
-            if(!bin.readFirmware())
-                exit(1);
-
-            if(!bin.readAudioSegments())
+            FirmwareFile firmwareFile = new FirmwareFile();
+            if(!firmwareFile.loadFromFile(inputFile))
                 exit(1);
 
             System.out.println();
-            System.out.print("Extracting binary segments into raw firmware images... ");
-
-            File outputRawBinFile = new File(outputPath + "/" + baseName+ ".raw.bin");
-            if(!bin.writeRawArchive(outputRawBinFile))
-                exit(1);
+            System.out.print("Extracting binary and audio segments to '" + outputPath + "'... ");
 
             // Write all binary segments to separate files
-            if(!bin.extractBinarySegments(outputPath))
+            if(!firmwareFile.saveSegmentsToFiles(outputPath))
                 exit(1);
 
             System.out.println("Done");
-
-            System.out.print("Extracting audio segments as MP3 files... ");
-            if(!bin.writeAudioSegments(outputPath))
-                exit(1);
-
-            System.out.println("Done");
-
-            System.out.println();
-            System.out.println("Segment files have been written to '" + outputPath + "'");
         }
         else if(args[0].equals("--compose")){
             if(args.length < 2){
@@ -70,33 +53,27 @@ public class Main {
                 return;
             }
 
-            File inputFile = new File(args[1]);
-            FOTABinary bin = new FOTABinary(inputFile);
-
-            //String outputPath = inputFile.getParentFile().getPath() + "/" + baseName + "_segments";
-            String outputPath = baseName + "_segments";
-            File dir = new File(outputPath);
+            String segmentsPath = args[1].split("[.]")[0] + "_segments";
+            File dir = new File(segmentsPath);
             if (!dir.exists()){
                 //noinspection ResultOfMethodCallIgnored
                 dir.mkdirs();
             }
 
-            System.out.println("Importing binary segments...");
+            System.out.println("Importing binary segments from " + segmentsPath + "...");
 
-            if(!bin.importBinarySegments(outputPath))
+            FirmwareFile firmwareFile = new FirmwareFile();
+            if(!firmwareFile.loadSegmentsFromFiles(segmentsPath))
                 exit(1);
 
             System.out.println();
-            System.out.print("Composing firmware file... ");
+            System.out.print("Composing firmware file to " + baseName + "_composed.bin... ");
 
             File outputFile = new File(baseName + "_composed.bin");
-            if(!bin.exportFirmware(outputFile))
+            if(!firmwareFile.saveToFirmwareFile(outputFile))
                 exit(1);
 
             System.out.println("Done");
-
-            System.out.println();
-            System.out.println("Patched firmware file has been successfully written to '" + baseName + "_composed.bin'");
         }
         else{
             System.out.println("Invalid argument. Please specify a mode (--extract or --compose)");

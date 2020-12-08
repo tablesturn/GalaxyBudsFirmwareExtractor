@@ -1,5 +1,8 @@
 package me.timschneeberger.galaxybudsfirmware.extractor;
 
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -12,30 +15,17 @@ public class Utils {
             array.add(b);
         }
     }
-    static byte[] toPrimitiveBytes(ArrayList<Byte> array){
-        byte[] bytes = new byte[array.size()];
-        for(int i = 0; i < array.size(); i++){
-            bytes[i] = array.get(i);
+    static java.lang.Integer nextFourBytesToIntLittleEndian(BufferedInputStream inputStream) throws IOException {
+        byte[] byteBuffer = new byte[4];
+        try{
+            if (inputStream.read(byteBuffer) == -1)
+                return null;
+            return ((((int) byteBuffer[2]) & 255) << 16) | ((((int) byteBuffer[3]) & 255) << 24) | ((((int) byteBuffer[1]) & 255) << 8) | (((int) byteBuffer[0]) & 255);
+        } catch (Exception e) {
+            e.printStackTrace();
+            inputStream.close();
+            return null;
         }
-        return bytes;
-    }
-    static Mp3Segment[] toPrimitiveMp3Segment(ArrayList<Mp3Segment> array){
-        Mp3Segment[] bytes = new Mp3Segment[array.size()];
-        for(int i = 0; i < array.size(); i++){
-            bytes[i] = array.get(i);
-        }
-        return bytes;
-    }
-    // Returns the segment id from a filename like "XYZ-segmentId.xyz"
-    // Returns -1 in case there was no id found
-    static int getSegmentIdFromFilename(String filename){
-        Pattern idPattern = Pattern.compile("(?<=-)\\d+(?=[.])");
-        Matcher idMatcher = idPattern.matcher(filename);
-        if(idMatcher.find()){
-            int segmentId = Integer.parseInt(idMatcher.group(idMatcher.groupCount()));
-            return segmentId;
-        }
-        else return -1;
     }
     static byte[] reverseByteArray(byte[] byteArray){
         byte temp;
@@ -46,9 +36,27 @@ public class Utils {
         }
         return byteArray;
     }
-    public static long getCRC32Checksum(byte[] bytes) {
+    static byte[] intToByteArrayBigEndian(int number){
+        return ByteBuffer.allocate(4).putInt(number).array();
+    }
+    static byte[] intToByteArrayLittleEndian(int number){
+        return Utils.reverseByteArray(ByteBuffer.allocate(4).putInt(number).array());
+    }
+    public static long getCrc32Checksum(byte[] bytes) {
         Checksum crc32 = new CRC32();
         crc32.update(bytes, 0, bytes.length);
         return crc32.getValue();
+    }
+    public static byte[] getCRC32ByteArrayLittleEndian(byte[] data) {
+        return Utils.reverseByteArray(ByteBuffer.allocate(4).putInt((int)Utils.getCrc32Checksum(data)).array());
+    }
+    public static int getSegmentIdFromFilename(String fileName){
+        Pattern idPattern = Pattern.compile("(?<=-)\\d+(?=[.])");
+        Matcher idMatcher = idPattern.matcher(fileName);
+        if(idMatcher.find()){
+            int segmentId = Integer.parseInt(idMatcher.group(idMatcher.groupCount()));
+            return segmentId;
+        }
+        else return -1;
     }
 }
